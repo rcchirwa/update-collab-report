@@ -1,6 +1,6 @@
 {
   "name": "update-collab-report",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Append structured session addendums to COLLABORATION_REPORT.md — a Claude Cowork skill for journaling coding sessions in a voice designed to be mined later for resumes, cover letters, and portfolio content.",
   "author": {
     "name": "Robert Chirwa"
