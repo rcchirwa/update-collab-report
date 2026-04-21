@@ -25,12 +25,15 @@ Execute these steps in order. Do not skip steps. Do not parallelize.
 
 ### 1. Locate the target file
 
-1. Run `git rev-parse --show-toplevel` from the current working directory to find the project root.
-2. Look for `COLLABORATION_REPORT.md` at that root.
-3. If it is missing, offer to create one with the minimal scaffold below and proceed to append the first addendum. Confirm with the user before creating.
-4. If the current directory is not inside a git repo, ask the user which directory is the project root.
+Execute these sub-steps in order. Do not short-circuit and do not fuzzy-match.
 
-Minimal scaffold for a new `COLLABORATION_REPORT.md`:
+1. Resolve the project root via `git rev-parse --show-toplevel`. If the current directory is not inside a git repo, ask the user for the absolute project root path. Do not proceed until a root is established.
+2. Look for a file whose filename is exactly `COLLABORATION_REPORT.md` at the project root. Case-sensitive. No fuzzy matching. Never consider files named `collab_report.md`, `REPORT.md`, `SESSION_NOTES.md`, `collaboration_report.md`, or any other variant as a match. If an ambiguous candidate exists at the root, list it to the user and ask whether to create a new canonical `COLLABORATION_REPORT.md` or treat the candidate as the target.
+3. If `COLLABORATION_REPORT.md` is not present at the project root, create it using the scaffold below. Confirm with the user before creating. The scaffold must include an in-file `## How this file is maintained` section whose content is the voice rules and the addendum structure — copied verbatim so the file is self-documenting for any future contributor or future session.
+4. After creation (or if the file already exists), read the `## How this file is maintained` section of the target file and treat it as authoritative. If the in-file guidance drifts from the SKILL.md guidance over time, the in-file guidance wins. Log a short note to the user when this happens.
+5. Only then proceed to the session-introspection step.
+
+Scaffold for a newly created `COLLABORATION_REPORT.md`:
 
 ```
 # <Project Name> — Collaboration Report
@@ -38,6 +41,30 @@ Minimal scaffold for a new `COLLABORATION_REPORT.md`:
 **Project:** <Project>
 **Repo:** <git remote origin URL>
 **Started:** <today, YYYY-MM-DD>
+
+## How this file is maintained
+
+This file is append-only. New entries are added below the last `---` separator, never inserted mid-file, never reordered, never rewritten.
+
+Each entry is a "Session Addendum" with a header of the form:
+
+    ## Session Addendum — <Topic Phrase> (YYYY-MM-DD, close+N)
+
+Where `N` is the session counter — one more than the highest `close+N` already in the file.
+
+Voice rules:
+- No emojis.
+- Em-dashes liberally for mid-sentence clauses.
+- Third-person neutral ("the session shipped", not "I shipped").
+- Concrete specifics over vague summaries — file paths with line numbers, PR numbers with links, 7-char commit hashes, test counts in before → after form.
+- Honest about what wasn't shipped — every addendum names at least one deferred or failed item.
+- No marketing language (banned: robust, powerful, seamless, enterprise-grade, cutting-edge, revolutionary, game-changing).
+
+Addendum section menu (pick 3–6, skip sections with no content):
+
+- What shipped · The debugging layers · Design choices that deviated from the spec · Verification · Commit & PR · Secret-handling discipline held · Lessons banked · Not shipped (intentional) · What this added to the toolkit
+
+Every addendum ends with a single `---` horizontal rule.
 
 ---
 ```
@@ -69,7 +96,20 @@ Produce the draft using the structure in [Addendum structure](#addendum-structur
 
 ### 6. Show the draft for approval
 
-Print the full draft to the chat. Ask the user to approve, tweak, or regenerate. **Do not write to disk until the user approves explicitly.**
+The approval prompt is a two-field confirmation, not a single-field one. Print these three fields, in this order, before any write:
+
+1. **Target file (absolute path).** The exact absolute path the skill is about to append to. Render on its own line, in backticks, with a leading label `Target file:`.
+2. **Action.** Either `CREATE new file` or `APPEND to existing file`. Render on its own line.
+3. **Full draft.** The complete addendum body that will be written.
+
+After printing those three fields, require the user to type one of the following tokens to proceed:
+
+- `approve` — the skill writes to the target file.
+- `approve but change target to <absolute path>` — the skill redirects the write to the new path. The new path must also end in `COLLABORATION_REPORT.md` at some project root; reject any other filename.
+- Any edit or regenerate request — the skill regenerates the draft and re-prompts with all three fields.
+- `cancel` — the skill exits without writing.
+
+Silence or a non-matching response counts as neither approval nor cancellation; re-prompt rather than proceed. Do not accept blanket approvals (`yes`, `looks good`, `sounds good`) for the first write of a new session — the approval token must explicitly match `approve` or the redirect form. This is narrow by design: ambiguous approval must not be treated as confirmation of a file choice the user has not seen.
 
 ### 7. Append to the file
 
