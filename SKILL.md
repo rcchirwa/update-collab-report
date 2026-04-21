@@ -56,9 +56,10 @@ Voice rules:
 - Honest about what wasn't shipped — every addendum names at least one deferred or failed item.
 - No marketing language (banned: robust, powerful, seamless, enterprise-grade, cutting-edge, revolutionary, game-changing).
 
-Addendum section menu (pick 3–6, skip sections with no content):
+Addendum sections — pick 3–6 total; skip any that have no content. Match the rendering style of existing addendums in the file.
 
-- What shipped · The debugging layers · Design choices that deviated from the spec · Verification · Commit & PR · Secret-handling discipline held · Lessons banked · Not shipped (intentional) · What this added to the toolkit
+- **Default section (include in nearly every addendum):** Problem Solved
+- **Optional menu:** What shipped · The debugging layers · Design choices that deviated from the spec · Verification · Commit & PR · Secret-handling discipline held · Lessons banked · Not shipped (intentional) · What this added to the toolkit
 
 Every addendum ends with a single `---` horizontal rule.
 
@@ -122,8 +123,9 @@ Silence or a non-matching response counts as neither approval nor cancellation; 
 
 ### <Section 1 heading>
 
-<Pick 3–6 of the following sub-sections based on what the session actually involved. Do not include sections that have no content.>
+<Pick 3–6 sections total. **Problem Solved** should be one of them in nearly every addendum — it is the narrative hook that explains why the session happened. Skip any section that has no content. Match the rendering style of existing addendums in the file (bolded bullets or sub-headings).>
 
+- **Problem Solved** — numbered list of the specific problems, questions, or blockers the session was called upon to resolve. State each entry in plain terms — what was stuck, what was unclear, what tradeoff needed resolving, what second opinion was wanted — not the resolution. Problem Solved captures the presenting problems; **The debugging layers** captures the diagnostic arc. One sentence per entry, not a narrative. Keep entries concrete: name the file, the error, the decision at stake; avoid abstractions like "needed help with architecture."
 - **What shipped** — bulleted list, one bullet per concrete deliverable. Include PR number + link, branch name, file path, and line deltas.
 - **The debugging layers** — numbered list for debug-heavy sessions. Each layer starts with a short bolded principle, followed by concrete evidence.
 - **Design choices that deviated from the spec** — numbered list when the session made deliberate trade-offs against a handoff or spec.
