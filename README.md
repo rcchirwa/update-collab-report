@@ -8,34 +8,58 @@ Coding sessions with Claude produce a lot of evidence — pull requests, diagnos
 
 The voice is third-person neutral and deliberately un-marketed — plain engineering prose with concrete specifics (file paths, PR numbers, commit hashes, test counts). That's a format a future self (or a resume generator) can lift cleanly into a bullet without having to rewrite.
 
-## Install (Claude Desktop)
+## Install
 
-1. In Claude Desktop: click **+** → **Plugins** → **Add plugin** → **From GitHub**.
-2. Enter `https://github.com/rcchirwa/update-collab-report` and confirm.
-3. Click **Manage plugins** and ensure `update-collab-report` is **enabled**.
-4. Restart the chat (or start a new one) for the skill to appear.
+### Claude Cowork
 
-If the repo isn't published yet, use **Add plugin** → **Local path** and select the plugin directory on disk.
+1. Grab the packaged `update-collab-report.skill` file — either build it locally (see below) or download it from this repo's GitHub Releases.
+2. In Claude Desktop, open the **Cowork** tab → **Customize** (left sidebar) → click the **+** button and look for the current upload affordance. It may be labelled **Upload custom plugin**, **Upload skill**, **Add custom skill**, or similar — Cowork's UI has shifted and the button name is not stable across versions.
+3. Select `update-collab-report.skill`. Confirm the skill appears in the Customize list.
+4. Start a fresh Cowork session for the skill to register.
 
-## Install (Claude Code CLI)
+> Cowork's upload-format support for custom skills is not authoritatively documented at the time of this writing. If the upload dialog rejects `.skill`, open a support ticket with the exact rejection message — the skill content itself is correct, the failure is likely in the upload affordance.
 
-One-shot session load — useful while iterating on the plugin itself:
+### Claude Code CLI
+
+The CLI install path for v0.2.0 (post-plugin-format) is not yet verified. Two options:
+
+- **Use the prior plugin-format release.** Tag `v0.1.2` in this repo is still a full Claude Code plugin with `.claude-plugin/` manifests — install via `claude plugin marketplace add /path/to/update-collab-report` + `claude plugin install update-collab-report@<marketplace-name>`. Check out `v0.1.2` before running those commands.
+- **Wait for verified skill-install guidance.** If Claude Code CLI picks up skills from a user-level directory (e.g. `~/.claude/skills/`), that path is not documented as of 2026-04 — do not rely on it without testing.
+
+Once either install path lands, the skill is invoked via natural-language phrase (see **Usage**) or by typing `/update-collab-report` in CLI versions that auto-map modern skill layouts to slash commands.
+
+### Build the `.skill` file from source
+
+Regenerating the upload artifact requires the `skill-creator` skill's packaging script, which must be invoked as a Python module from its own install directory. Also note that the script does NOT auto-exclude `.git/` or `.gitignore` — running it directly on a git-tracked working tree leaks ~60KB of git objects into the archive, bloating it from ~12KB to ~75KB.
 
 ```
-claude --plugin-dir /path/to/update-collab-report
+# 1. rsync the skill content to a clean staging dir, excluding git/system noise.
+rsync -a \
+  --exclude='.git' \
+  --exclude='.DS_Store' \
+  --exclude='.gitignore' \
+  /path/to/update-collab-report/ \
+  /tmp/update-collab-report-build/update-collab-report/
+
+# 2. Run the packager as a module from the skill-creator directory.
+#    Substitute <path-to-skill-creator> for the actual install path
+#    (e.g. ~/.claude/plugins/.../skills/skill-creator).
+cd <path-to-skill-creator>
+python3 -m scripts.package_skill \
+  /tmp/update-collab-report-build/update-collab-report \
+  /tmp/
+
+# 3. The artifact lands at /tmp/update-collab-report.skill (~12KB, five files).
+#    That's the file Cowork's upload dialog expects.
 ```
 
-Persistent install via a local marketplace:
-
-```
-claude plugin marketplace add /path/to/update-collab-report
-claude plugin install update-collab-report@local-dev
-```
+Direct-script invocation (`python3 scripts/package_skill.py`) will fail with `ModuleNotFoundError: No module named 'scripts'` — the module form is required.
 
 ## Usage
 
-Say any of the following in a Claude chat inside a project that has a `COLLABORATION_REPORT.md` at its root:
+Inside a project that has a `COLLABORATION_REPORT.md` at its root — or is willing to have one scaffolded — invoke the skill with any of:
 
+- `/update-collab-report`
 - "update collab report"
 - "update collaboration report"
 - "log this session"
@@ -43,9 +67,9 @@ Say any of the following in a Claude chat inside a project that has a `COLLABORA
 - "journal this session"
 - "write up this session for the collab report"
 
-The skill will introspect the session — files edited, commits made, PRs opened, tests added, errors diagnosed, decisions taken — ask for a short topic phrase, draft the addendum, show it for review, and only append on explicit approval.
+The skill will introspect the session — files edited, commits made, PRs opened, tests added, errors diagnosed, decisions taken — ask for a short topic phrase, draft the addendum, show it for three-field approval (target file path, create-or-append action, full draft), and only write on explicit `approve`.
 
-See [`skills/update-collab-report/examples/example-addendum.md`](skills/update-collab-report/examples/example-addendum.md) for a canonical reference output.
+See [`examples/example-addendum.md`](examples/example-addendum.md) for a canonical reference output.
 
 ## Format contract
 
@@ -69,10 +93,14 @@ Every addendum the skill writes conforms to these rules:
 
 ## Known edge cases
 
-- If `COLLABORATION_REPORT.md` doesn't exist, the skill offers to create a minimal scaffold and confirms before proceeding.
+- If `COLLABORATION_REPORT.md` doesn't exist, the skill offers to create a minimal scaffold and confirms before proceeding. The scaffold is self-documenting — it embeds the voice rules and addendum structure so the file remains authoritative even if the skill drifts.
 - If the current directory isn't inside a git repo, the skill asks the user which directory is the project root.
 - If the session spanned many sub-topics, the skill asks which thread the addendum should focus on rather than producing a muddled summary.
 - The session-counter heuristic (`close+N`) reads existing addendum headers via regex `\(YYYY-MM-DD, close\+(\d+)\)`. Hand-edited headers that drift from this format will cause the counter to restart at 1.
+
+## History
+
+This project started life as a Claude Code plugin (`v0.1.0` through `v0.1.2`, tagged in this repo's history) before pivoting to a standalone skill at `v0.2.0` — the plugin format's Cowork distribution path was undocumented and the upload dialog rejected the plugin manifests. The skill format via `.skill` packaging is the current supported path.
 
 ## Contributing
 

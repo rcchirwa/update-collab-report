@@ -1,23 +1,13 @@
 ---
 name: update-collab-report
-description: "Append a structured session addendum to COLLABORATION_REPORT.md at the current project's root. Captures what was built, verified, shipped, and learned in the current session — in a consistent voice designed to be mined later for resume bullet points, cover letters, LinkedIn posts, and portfolio content. Triggers on 'update collab report' and variants."
-argument-hint: "[optional topic phrase]"
+description: This skill should be used whenever the user types `/update-collab-report`, says "update collab report", "update collaboration report", "log a session addendum", "add a session entry to the report", "write a session summary", "capture this session for the resume file", or any variant referencing the COLLABORATION_REPORT.md journaling workflow. It appends a structured, append-only session addendum to COLLABORATION_REPORT.md at the current project's git root — capturing what was built, verified, shipped, and learned in the session, in a consistent voice designed to be mined later for resume bullet points, cover letters, LinkedIn posts, and portfolio content. Use proactively at the end of a productive session — offer to append a session addendum even if the user does not explicitly ask.
 ---
 
 # update-collab-report
 
 Append a structured session addendum to the project's `COLLABORATION_REPORT.md`. The addendum captures what was shipped, verified, and learned in the current session — in a voice designed to be mined later for resume bullets, cover-letter paragraphs, and portfolio content.
 
-## Triggers
-
-Fire this skill when the user says any of:
-
-- `update collab report`
-- `update collaboration report`
-- `log this session`
-- `add session addendum`
-- `journal this session`
-- `write up this session for the collab report`
+Triggering is handled by the frontmatter description above — do not duplicate trigger phrases here; they drift over time.
 
 ## Procedure
 

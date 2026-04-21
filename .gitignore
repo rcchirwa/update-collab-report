@@ -29,3 +29,7 @@ yarn-error.log*
 
 # Logs
 *.log
+
+# Skill packaging artifacts
+*.skill
+dist/
