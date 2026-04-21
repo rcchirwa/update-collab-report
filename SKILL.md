@@ -1,6 +1,6 @@
 ---
 name: update-collab-report
-description: This skill should be used whenever the user types `/update-collab-report`, says "update collab report", "update collaboration report", "log a session addendum", "add a session entry to the report", "write a session summary", "capture this session for the resume file", or any variant referencing the COLLABORATION_REPORT.md journaling workflow. It appends a structured, append-only session addendum to COLLABORATION_REPORT.md at the current project's git root — capturing what was built, verified, shipped, and learned in the session, in a consistent voice designed to be mined later for resume bullet points, cover letters, LinkedIn posts, and portfolio content. Use proactively at the end of a productive session — offer to append a session addendum even if the user does not explicitly ask.
+description: This skill should be used whenever the user types `/update-collab-report`, says "update collab report", "update collaboration report", "log a session addendum", "add a session entry to the report", "write a session summary", "capture this session for the resume file", or any variant referencing the COLLABORATION_REPORT.md journaling workflow. It appends a structured, append-only session addendum to COLLABORATION_REPORT.md at the current project's root — a git root when one exists, otherwise a user-confirmed directory. Captures what was built, verified, shipped, and learned in the session, in a consistent voice designed to be mined later for resume bullet points, cover letters, LinkedIn posts, and portfolio content. Use proactively at the end of a productive session — offer to append a session addendum even if the user does not explicitly ask.
 ---
 
 # update-collab-report
@@ -17,7 +17,13 @@ Execute these steps in order. Do not skip steps. Do not parallelize.
 
 Execute these sub-steps in order. Do not short-circuit and do not fuzzy-match.
 
-1. Resolve the project root via `git rev-parse --show-toplevel`. If the current directory is not inside a git repo, ask the user for the absolute project root path. Do not proceed until a root is established.
+1. Resolve the project root. The workspace does **not** need to be a git repo — handle both cases explicitly.
+   - Run `git rev-parse --show-toplevel`. Exit code `0` with a path on stdout means "inside a git repo"; exit code `128` (or `fatal: not a git repository` on stderr) means "not inside a git repo."
+   - **If inside a git repo** — that directory is the project root. Before proceeding, perform two checks in order:
+     - **Tracked-file check.** Run `git ls-files --error-unmatch COLLABORATION_REPORT.md` at the root. Exit `0` means the file is already tracked in git — `.gitignore` will NOT untrack it, and old versions remain in history. Stop and surface this to the user: suggest `git rm --cached COLLABORATION_REPORT.md` (plus the history-rewrite caveat for secrets) and wait for explicit approval before continuing. Never silently proceed.
+     - **Gitignore check.** Look at `.gitignore` at the root. If it does not exist, create it containing the single line `COLLABORATION_REPORT.md`. If it exists, check whether an existing entry — an exact match OR a broader glob that already covers the file (`COLLABORATION_REPORT.*`, `*.md`, etc.) — already ignores it. If covered, do nothing. Otherwise append `COLLABORATION_REPORT.md`, first adding a leading newline if the file does not already end in one. Tell the user in one line when a new entry is actually added; stay silent when already covered. The file holds resume-portfolio material and must never be checked into repo history.
+   - **If not inside a git repo** — do not fail. Ask the user for the absolute project root path; the current working directory is a reasonable default but do not assume it silently. Skip all `.gitignore` handling in this case.
+   - Do not proceed until a root is established.
 2. Look for a file whose filename is exactly `COLLABORATION_REPORT.md` at the project root. Case-sensitive. No fuzzy matching. Never consider files named `collab_report.md`, `REPORT.md`, `SESSION_NOTES.md`, `collaboration_report.md`, or any other variant as a match. If an ambiguous candidate exists at the root, list it to the user and ask whether to create a new canonical `COLLABORATION_REPORT.md` or treat the candidate as the target.
 3. If `COLLABORATION_REPORT.md` is not present at the project root, create it using the scaffold below. Confirm with the user before creating. The scaffold must include an in-file `## How this file is maintained` section whose content is the voice rules and the addendum structure — copied verbatim so the file is self-documenting for any future contributor or future session.
 4. After creation (or if the file already exists), read the `## How this file is maintained` section of the target file and treat it as authoritative. If the in-file guidance drifts from the SKILL.md guidance over time, the in-file guidance wins. Log a short note to the user when this happens.
@@ -29,7 +35,7 @@ Scaffold for a newly created `COLLABORATION_REPORT.md`:
 # <Project Name> — Collaboration Report
 
 **Project:** <Project>
-**Repo:** <git remote origin URL>
+**Repo:** <git remote origin URL, or "n/a — local workspace (not a git repo)">
 **Started:** <today, YYYY-MM-DD>
 
 ## How this file is maintained
@@ -166,7 +172,10 @@ If the user asks to include a full secret in the addendum, refuse and explain �
 
 - **Session had nothing substantive.** If the session produced no concrete deliverables worth journaling, tell the user `this session produced no concrete deliverables worth journaling — skipping` and do not write.
 - **Main thread unclear.** If the session spanned many sub-topics, ask the user: `Which thread should the addendum focus on? A) <option>, B) <option>, C) other.`
-- **Project root ambiguous.** Ask which directory to treat as the project root rather than guessing.
+- **Project root ambiguous.** Ask which directory to treat as the project root rather than guessing. This is the standard flow for non-git-repo workspaces, not an error condition.
+- **Non-git workspace.** A missing git repo is fine. Skip `.gitignore` handling. Confirm the project root with the user and proceed.
+- **Git repo without `.gitignore` entry.** Append `COLLABORATION_REPORT.md` to `.gitignore` before writing the first addendum. Tell the user in one line so they know the file is being excluded from version control.
+- **Report was previously tracked in git.** `.gitignore` does NOT untrack a file that is already committed. If `git ls-files --error-unmatch COLLABORATION_REPORT.md` exits `0`, stop and tell the user the file is still tracked; suggest `git rm --cached COLLABORATION_REPORT.md` (noting that old versions remain in history until a history rewrite). Wait for explicit approval before continuing — never silently proceed.
 - **Trailer line preservation.** Some collaboration reports end with a trailer like `*This report was generated by Claude Code.*`. Always insert new addendums above the trailer, never below it.
 
 ## Reference example

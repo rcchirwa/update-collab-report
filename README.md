@@ -94,7 +94,8 @@ Every addendum the skill writes conforms to these rules:
 ## Known edge cases
 
 - If `COLLABORATION_REPORT.md` doesn't exist, the skill offers to create a minimal scaffold and confirms before proceeding. The scaffold is self-documenting — it embeds the voice rules and addendum structure so the file remains authoritative even if the skill drifts.
-- If the current directory isn't inside a git repo, the skill asks the user which directory is the project root.
+- The skill treats the project root as **a git root when one exists, otherwise a user-confirmed directory** — non-git workspaces are a supported flow, not an error.
+- Inside a git repo, the skill appends `COLLABORATION_REPORT.md` to `.gitignore` when missing (creating `.gitignore` if needed) and refuses to proceed silently if the report is already tracked by git — it surfaces the `git rm --cached` option and waits for explicit approval. The report is resume-portfolio material and must not be checked into repo history.
 - If the session spanned many sub-topics, the skill asks which thread the addendum should focus on rather than producing a muddled summary.
 - The session-counter heuristic (`close+N`) reads existing addendum headers via regex `\(YYYY-MM-DD, close\+(\d+)\)`. Hand-edited headers that drift from this format will cause the counter to restart at 1.
 
