@@ -40,7 +40,7 @@ Scaffold for a newly created `COLLABORATION_REPORT.md`:
 
 ## How this file is maintained
 
-This file is append-only. New entries are added below the last `---` separator, never inserted mid-file, never reordered, never rewritten.
+This file is append-only. New entries are added below the last `---` separator, never inserted mid-file, never reordered, never rewritten. The header above — project metadata plus this maintenance section — is one-time content, written only at file creation; addendum writes append the addendum body alone and never reproduce or modify it.
 
 Each entry is a "Session Addendum" with a header of the form:
 
@@ -81,7 +81,7 @@ Before drafting, scan the current conversation for evidence. Collect:
 
 ### 3. Determine the session counter
 
-Scan the existing file for addendum headers matching the regex `\(YYYY-MM-DD, close\+(\d+)\)`. The new entry's counter is `max(existing) + 1`. If there are no matching headers, use `close+1`.
+Scan the existing file for addendum headers matching the regex `\(\d{4}-\d{2}-\d{2}, close\+(\d+)\)`. The new entry's counter is `max(existing) + 1`. If there are no matching headers, use `close+1`.
 
 ### 4. Ask the user for a short topic phrase
 
@@ -90,6 +90,8 @@ Ask for a 3–8-word phrase that frames the narrative hook — for example, `Sho
 ### 5. Draft the addendum
 
 Produce the draft using the structure in [Addendum structure](#addendum-structure) below and the voice rules in [Voice rules](#voice-rules).
+
+Before moving to step 6, validate the draft's first non-blank line matches exactly `## Session Addendum — <Topic Phrase> (YYYY-MM-DD, close+N)` per **Header format (non-negotiable)** — `##` level, literal phrase `Session Addendum`, em-dash, non-empty topic phrase, ISO date, parenthesized `close+N`. If it does not, revise the draft before showing it to the user; do not surface a malformed draft for approval. A single malformed header corrupts the session-counter regex in step 3 for every future session in this file.
 
 ### 6. Show the draft for approval
 
@@ -110,11 +112,19 @@ Silence or a non-matching response counts as neither approval nor cancellation; 
 
 ### 7. Append to the file
 
-- If the file ends with a trailer like `*This report was generated...*`, insert the new addendum immediately above it.
-- Otherwise, append to the end of the file.
+**Before writing:**
+
+- The addendum draft is the **only** content written. Never reproduce the file's top-of-file scaffold: the project metadata block (`**Project:** / **Repo:** / **Started:**`) and the `## How this file is maintained` section are written only when the file is first created (step 1, sub-step 3) and are not part of any addendum write.
+- Re-verify the header. Step 5's validation is the primary check, but if the draft was regenerated or edited during the approval loop in step 6, confirm again that the first non-blank line matches **Header format (non-negotiable)**. Abort and regenerate if malformed — a single deviation corrupts the session-counter regex for every future session in this file.
+
+**When writing:**
+
+- If the file ends with a trailer like `*This report was generated...*`, insert the new addendum immediately above it. Otherwise, append to the end of the file.
 - Preserve all existing content byte-for-byte — this skill only adds, never edits.
 
 ## Addendum structure
+
+The draft below is the complete content of a single addendum write. It contains no project metadata, no maintenance-rules section, no top-of-file header — those exist once at the top of the file, written only when the file is first created (step 1, sub-step 3), and must never be reproduced in an addendum.
 
 ```
 ## Session Addendum — <Topic Phrase> (YYYY-MM-DD, close+N)
@@ -138,6 +148,24 @@ Silence or a non-matching response counts as neither approval nor cancellation; 
 ```
 
 Always end the addendum with a single `---` horizontal rule as a separator before any future addendum.
+
+### Header format (non-negotiable)
+
+Every addendum — without exception — opens with exactly this line:
+
+    ## Session Addendum — <Topic Phrase> (YYYY-MM-DD, close+N)
+
+Enforce each component literally:
+
+- **Heading level:** `##` (h2). Not `###`, not `#`, not bold-only.
+- **Literal phrase:** `Session Addendum` — case-sensitive. No synonyms (`Session Entry`, `Session Note`, `Addendum`, etc.).
+- **Separator:** em-dash (`—`, U+2014) between `Session Addendum` and the topic phrase, with single spaces on both sides. Not hyphen-minus (`-`), not en-dash (`–`).
+- **Topic phrase:** required, non-empty, 3–8 words per step 4. Exactly one space between the em-dash and the topic phrase, and exactly one space between the topic phrase and the opening parenthesis. No trailing whitespace.
+- **Date:** ISO `YYYY-MM-DD` — the session's actual date, not a date lifted from conversation content.
+- **Counter:** literal `close+` prefix followed by the integer `N` from the **Determine the session counter** step.
+- **Parentheses:** around the date-and-counter block, no spaces inside.
+
+The session-counter regex in step 3 (`\(\d{4}-\d{2}-\d{2}, close\+(\d+)\)`) depends on this exact format. A single malformed header will cause the counter for every future session in that file to restart at 1.
 
 ## Voice rules
 
@@ -178,6 +206,7 @@ If the user asks to include a full secret in the addendum, refuse and explain �
 - **Non-git workspace.** A missing git repo is fine. Skip `.gitignore` handling. Confirm the project root with the user and proceed.
 - **Git repo without `.gitignore` entry.** Append `COLLABORATION_REPORT.md` to `.gitignore` before writing the first addendum. Tell the user in one line so they know the file is being excluded from version control.
 - **Report was previously tracked in git.** `.gitignore` does NOT untrack a file that is already committed. If `git ls-files --error-unmatch COLLABORATION_REPORT.md` exits `0`, stop and tell the user the file is still tracked; suggest `git rm --cached COLLABORATION_REPORT.md` (noting that old versions remain in history until a history rewrite). Wait for explicit approval before continuing — never silently proceed.
+- **Scaffold is one-time content.** The project metadata block (`**Project:** / **Repo:** / **Started:**`) and the `## How this file is maintained` section are written only when the file is first created (step 1, sub-step 3). Subsequent addendum writes append the addendum body alone — never reproduce the scaffold header or any part of it, regardless of topic phrase.
 - **Trailer line preservation.** Some collaboration reports end with a trailer like `*This report was generated by Claude Code.*`. Always insert new addendums above the trailer, never below it.
 
 ## Reference example
